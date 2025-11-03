@@ -3,15 +3,13 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Box,
   Button,
-  Container,
   FormLabel,
   Grid,
   IconButton,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
-import { ArrowBack, ArrowBackIos } from "@mui/icons-material";
+import { ArrowBack } from "@mui/icons-material";
 import { signUp } from "../store/auth/signup";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import z from "zod";
@@ -37,7 +35,7 @@ const Home = () => {
     defaultValues: {
       firstName: "",
       lastName: "",
-      address:"",
+      address: "",
       city: "",
       state: "",
       pincode: "",
@@ -50,15 +48,17 @@ const Home = () => {
     handleSubmit,
     formState: { errors },
   } = methods;
-  const onSubmit = (data) => console.log("data", data);
+  const onSubmit = (data) => {
+    
+    console.log("data", data);
+    // mutation.mutate(data);
+  };
 
   const userList = useQuery({ queryKey: ["users"], queryFn: getUserList });
-  console.log("userList", userList.data);
   const mutation = useMutation({
     mutationFn: signUp,
     onSuccess: () => {
       // Invalidate and refetch
-      alert("success");
       queryClient.invalidateQueries({ queryKey: ["users"] });
     },
   });
@@ -93,16 +93,16 @@ const Home = () => {
                   {userList &&
                     userList.data &&
                     userList?.data.map((user, index) => (
-                      <Grid item key={user?.id}>
+                      <Grid key={user?.id}>
                         <Grid
                           container
                           direction={"row"}
                           justifyContent={"space-between"}
                         >
-                          <Grid item>
+                          <Grid>
                             <Typography>{user?.name}</Typography>
                           </Grid>
-                          <Grid item>
+                          <Grid>
                             <Typography>{user?.id}</Typography>
                           </Grid>
                         </Grid>
