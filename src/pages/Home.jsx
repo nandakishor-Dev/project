@@ -7,24 +7,34 @@ import {
   FormLabel,
   Grid,
   IconButton,
+  Stack,
   TextField,
   Typography,
 } from "@mui/material";
 import { ArrowBack, ArrowBackIos } from "@mui/icons-material";
 import { signUp } from "../store/auth/signup";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, FormProvider, useForm } from "react-hook-form";
+import z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import TextFieldComponent from "../components/TextField";
 
 const Home = () => {
-  const {
-    control,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm({
+  const schema = z.object({
+    firstName: z.string().min(1, "First name is required"),
+    lastName: z.string().min(1, "Last name is required"),
+    city: z.string().min(1, "City is required"),
+    state: z.string().min(1, "State is required"),
+    pincode: z.preprocess(
+      (val) => Number(val),
+      z.number().min(100000, "Invalid pincode")
+    ),
+    country: z.string().min(1, "Country is required"),
+  });
+  const methods = useForm({
+    resolver: zodResolver(schema),
     defaultValues: {
       firstName: "",
       lastName: "",
-      address: "",
       city: "",
       state: "",
       pincode: "",
@@ -32,9 +42,14 @@ const Home = () => {
     },
   });
 
-  const onSubmit = (data) => console.log(data);
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = methods;
+  const onSubmit = (data) => console.log("data", data);
 
-  console.log(watch("example"));
+  console.log("errors", errors);
   const mutation = useMutation({
     mutationFn: signUp,
     onSuccess: () => {
@@ -51,11 +66,11 @@ const Home = () => {
         backgroundColor: "white",
       }}
     >
-      <Grid container direction={"column"} spacing={2}>
+      <Grid container="true">
         {/* Top Section */}
-        <Grid item sx={{ p: 2 }}>
-          <Grid container direction={"row"} justifyContent={"space-between"}>
-            <Grid item>
+        <Stack sx={{ p: 2 }} flexGrow={1}>
+          <Grid container="true" justifyContent={"space-between"}>
+            <Grid>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <IconButton>
                   <ArrowBack />
@@ -63,15 +78,15 @@ const Home = () => {
                 <Typography variant="body2">Back</Typography>
               </Box>
             </Grid>
-            <Grid item>Custom theme</Grid>
+            <Grid></Grid>
           </Grid>
-        </Grid>
-        {/* Main Section */}
-        <Grid item sx={{ bgcolor: "gray" }}>
-          <Grid container>
-            <Grid size={4} sx={{ bgcolor: "#F5F6FA", p: 10, pt: 20, pb: 20 }}>
-              <Grid container direction={"column"} spacing={2}>
-                {/* {[1, 2, 3, 4].map((i) => (
+
+          {/* Main Section */}
+          <Grid sx={{ bgcolor: "gray" }}>
+            <Grid container="true">
+              <Grid size={4} sx={{ bgcolor: "#F5F6FA", p: 10, pt: 20, pb: 20 }}>
+                <Grid container="true" spacing={2}>
+                  {/* {[1, 2, 3, 4].map((i) => (
                   <Grid item key={i}>
                     <Grid
                       container
@@ -87,100 +102,173 @@ const Home = () => {
                     </Grid>
                   </Grid>
                 ))} */}
+                </Grid>
+              </Grid>
+              <Grid size={8} sx={{ bgcolor: "white", p: 10, pr: 20 }}>
+                <FormProvider {...methods}>
+                  <form onSubmit={handleSubmit(onSubmit)}>
+                    <Stack container="true" spacing={2}>
+                      <Grid
+                        container="true"
+                        justifyContent={"space-between"}
+                        spacing={2}
+                      >
+                        <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
+                          <FormLabel>First name</FormLabel>
+                          <Controller
+                            name="firstName"
+                            control={control}
+                            rules={{ required: "Name is required" }}
+                            render={({ field }) => (
+                              <TextFieldComponent
+                                {...field}
+                                error={!!errors?.firstName?.message}
+                                helperText={
+                                  errors ? errors?.firstName?.message : ""
+                                }
+                                size="small"
+                                fullWidth
+                              />
+                            )}
+                          />
+                          {errors.name?.message && (
+                            <p>{errors.name?.message}</p>
+                          )}
+                        </Grid>
+
+                        <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
+                          <FormLabel>Last name</FormLabel>
+                          <Controller
+                            name="lastName"
+                            control={control}
+                            render={({ field }) => (
+                              <TextFieldComponent
+                                {...field}
+                                error={!!errors?.lastName?.message}
+                                helperText={
+                                  errors ? errors?.lastName?.message : ""
+                                }
+                                size="small"
+                                fullWidth
+                              />
+                            )}
+                          />
+                        </Grid>
+                      </Grid>
+                      <Grid>
+                        <FormLabel>Adress</FormLabel>
+                        <Controller
+                          name="address"
+                          control={control}
+                          render={({ field }) => (
+                            <TextFieldComponent
+                              {...field}
+                              error={!!errors?.address?.message}
+                              helperText={
+                                errors ? errors?.address?.message : ""
+                              }
+                              size="medium"
+                              fullWidth
+                            />
+                          )}
+                        />
+                      </Grid>
+                      <Grid
+                        container="true"
+                        justifyContent={"space-between"}
+                        spacing={2}
+                      >
+                        <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
+                          <FormLabel>City</FormLabel>
+                          <Controller
+                            name="city"
+                            control={control}
+                            render={({ field }) => (
+                              <TextFieldComponent
+                                {...field}
+                                error={!!errors?.city?.message}
+                                helperText={errors ? errors?.city?.message : ""}
+                                size="small"
+                                fullWidth
+                              />
+                            )}
+                          />
+                        </Grid>
+
+                        <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
+                          <FormLabel>State</FormLabel>
+                          <Controller
+                            name="state"
+                            control={control}
+                            render={({ field }) => (
+                              <TextFieldComponent
+                                {...field}
+                                error={!!errors?.state?.message}
+                                helperText={
+                                  errors ? errors?.state?.message : ""
+                                }
+                                size="small"
+                                fullWidth
+                              />
+                            )}
+                          />
+                        </Grid>
+                      </Grid>
+                      <Grid
+                        container="true"
+                        justifyContent={"space-between"}
+                        spacing={2}
+                      >
+                        <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
+                          <FormLabel>Zip/Postalcode</FormLabel>
+                          <Controller
+                            name="pincode"
+                            control={control}
+                            render={({ field }) => (
+                              <TextFieldComponent
+                                {...field}
+                                error={!!errors?.pincode?.message}
+                                helperText={
+                                  errors ? errors?.pincode?.message : ""
+                                }
+                                size="small"
+                                fullWidth
+                              />
+                            )}
+                          />
+                        </Grid>
+
+                        <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
+                          <FormLabel>Country</FormLabel>
+                          <Controller
+                            name="country"
+                            control={control}
+                            render={({ field }) => (
+                              <TextFieldComponent
+                                {...field}
+                                error={!!errors?.country?.message}
+                                helperText={
+                                  errors ? errors?.country?.message : ""
+                                }
+                                size="small"
+                                fullWidth
+                              />
+                            )}
+                          />
+                        </Grid>
+                      </Grid>
+                      <Grid>
+                        <Button type="submit" variant="contained">
+                          Submit
+                        </Button>
+                      </Grid>
+                    </Stack>
+                  </form>
+                </FormProvider>
               </Grid>
             </Grid>
-            <Grid size={8} sx={{ bgcolor: "white", p: 10, pr:20}}>
-              <form onSubmit={handleSubmit(onSubmit)}>
-                <Grid container direction={"column"} spacing={2}>
-                  <Grid container justifyContent={"space-between"}>
-                    <Grid item size={{ xs: 12, sm: 12, lg: 6 }}>
-                      <FormLabel>First name</FormLabel>
-                      <Controller
-                        name="firstName"
-                        control={control}
-                        render={({ field }) => (
-                          <TextField {...field} fullWidth size="small" />
-                        )}
-                      />
-                    </Grid>
-
-                    <Grid item size={{ xs: 12, sm: 12, lg: 6 }}>
-                      <FormLabel>Last name</FormLabel>
-                      <Controller
-                        name="lastName"
-                        control={control}
-                        render={({ field }) => (
-                          <TextField {...field} fullWidth size="small" />
-                        )}
-                      />
-                    </Grid>
-                  </Grid>
-                  <Grid item>
-                    <FormLabel>Adress</FormLabel>
-                    <Controller
-                      name="address"
-                      control={control}
-                      render={({ field }) => (
-                        <TextField {...field} fullWidth size="medium" />
-                      )}
-                    />
-                  </Grid>
-                  <Grid container justifyContent={"space-between"}>
-                    <Grid item size={{ xs: 12, sm: 12, lg: 6 }}>
-                      <FormLabel>City</FormLabel>
-                      <Controller
-                        name="city"
-                        control={control}
-                        render={({ field }) => (
-                          <TextField {...field} fullWidth size="small" />
-                        )}
-                      />
-                    </Grid>
-
-                    <Grid item size={{ xs: 12, sm: 12, lg: 6 }}>
-                      <FormLabel>State</FormLabel>
-                      <Controller
-                        name="state"
-                        control={control}
-                        render={({ field }) => (
-                          <TextField {...field} fullWidth size="small" />
-                        )}
-                      />
-                    </Grid>
-                  </Grid>
-                  <Grid container justifyContent={"space-between"}>
-                    <Grid item size={{ xs: 12, sm: 12, lg: 6 }}>
-                      <FormLabel>Zip/Postalcode</FormLabel>
-                      <Controller
-                        name="pincode"
-                        control={control}
-                        render={({ field }) => (
-                          <TextField {...field} fullWidth size="small" />
-                        )}
-                      />
-                    </Grid>
-
-                    <Grid item size={{ xs: 12, sm: 12, lg: 6 }}>
-                      <FormLabel>Country</FormLabel>
-                      <Controller
-                        name="country"
-                        control={control}
-                        render={({ field }) => (
-                          <TextField {...field} fullWidth size="small" />
-                        )}
-                      />
-                    </Grid>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Button type="submit" variant="contained">
-                      Submit
-                    </Button>
-                  </Grid>
-                </Grid>
-              </form>
-            </Grid>
           </Grid>
-        </Grid>
+        </Stack>
       </Grid>
     </Box>
   );
