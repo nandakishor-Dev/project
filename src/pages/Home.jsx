@@ -16,15 +16,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import TextFieldComponent from "../components/TextField";
 import { getProductList } from "../store/api/productList";
 import { registerProduct } from "../store/api/registerProduct";
+import toast, { Toaster } from "react-hot-toast";
 
 const Home = () => {
   const schema = z.object({
     name: z.string().min(1, "PC name is required"),
     model: z.string().min(1, "Model is required"),
     year: z.coerce
-      .number()
+      .number({ invalid_type_error: "Year must be a number" })
       .int({ message: "Year must be an integer" })
-      .positive({ message: "Year is required" }),
+      .refine((val) => val >= 1000 && val <= 9999, {
+        message: "Year must be a 4-digit number",
+      }),
     harddiskSize: z.string().min(1, "Harddisk size is required"),
     price: z.coerce.number().positive({ message: "Price is required" }),
   });
@@ -64,8 +67,11 @@ const Home = () => {
   const mutation = useMutation({
     mutationFn: registerProduct,
     onSuccess: (data) => {
-      if(data.id){
-        
+      if (data.id) {
+        toast("Product Registered successfully");
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
       }
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: ["products"] });
@@ -73,171 +79,180 @@ const Home = () => {
   });
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        backgroundColor: "white",
-      }}
-    >
-      <Grid container="true">
-        {/* Top Section */}
-        <Stack sx={{ p: 2 }} flexGrow={1}>
-          <Grid container="true" justifyContent={"space-between"}>
-            <Grid>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <IconButton>
-                  <ArrowBack />
-                </IconButton>
-                <Typography variant="body2">Back</Typography>
-              </Box>
-            </Grid>
-            <Grid></Grid>
-          </Grid>
+    <>
+      <Toaster />
 
-          {/* Main Section */}
-          <Grid sx={{ bgcolor: "gray" }}>
-            <Grid container="true">
-              <Grid size={4} sx={{ bgcolor: "#F5F6FA", p: 10, pt: 20, pb: 20 }}>
-                <Stack container="true" spacing={2}>
-                  {productList &&
-                    productList.data &&
-                    productList?.data.map((product, index) => (
-                      <Grid key={product?.id}>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          backgroundColor: "white",
+        }}
+      >
+        <Grid container="true">
+          {/* Top Section */}
+          <Stack sx={{ p: 2 }} flexGrow={1}>
+            <Grid container="true" justifyContent={"space-between"}>
+              <Grid>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <IconButton>
+                    <ArrowBack />
+                  </IconButton>
+                  <Typography variant="body2">Back</Typography>
+                </Box>
+              </Grid>
+              <Grid>  <Typography variant="body1">Register Product</Typography></Grid>
+            </Grid>
+
+            {/* Main Section */}
+            <Grid sx={{ bgcolor: "gray" }}>
+              <Grid container="true">
+                <Grid
+                  size={4}
+                  sx={{ bgcolor: "#F5F6FA", p: 10, pt: 20, pb: 20 }}
+                >
+                  <Stack container="true" spacing={2}>
+                    {productList &&
+                      productList.data &&
+                      productList?.data.map((product, index) => (
+                        <Grid key={product?.id}>
+                          <Grid
+                            container
+                            direction={"row"}
+                            justifyContent={"space-between"}
+                          >
+                            <Grid>
+                              <Typography>{product?.name}</Typography>
+                            </Grid>
+                            <Grid>
+                              <Typography>{product?.data?.price}</Typography>
+                            </Grid>
+                          </Grid>
+                        </Grid>
+                      ))}
+                  </Stack>
+                </Grid>
+                <Grid size={8} sx={{ bgcolor: "white", p: 10, pr: 20 }}>
+                  <FormProvider {...methods}>
+                    <form onSubmit={handleSubmit(onSubmit)}>
+                      <Stack container="true" spacing={2}>
                         <Grid
-                          container
-                          direction={"row"}
+                          container="true"
                           justifyContent={"space-between"}
+                          spacing={2}
                         >
-                          <Grid>
-                            <Typography>{product?.name}</Typography>
-                          </Grid>
-                          <Grid>
-                            <Typography>{product?.data?.price}</Typography>
-                          </Grid>
-                        </Grid>
-                      </Grid>
-                    ))}
-                </Stack>
-              </Grid>
-              <Grid size={8} sx={{ bgcolor: "white", p: 10, pr: 20 }}>
-                <FormProvider {...methods}>
-                  <form onSubmit={handleSubmit(onSubmit)}>
-                    <Stack container="true" spacing={2}>
-                      <Grid
-                        container="true"
-                        justifyContent={"space-between"}
-                        spacing={2}
-                      >
-                        <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
-                          <FormLabel>PC name</FormLabel>
-                          <Controller
-                            name="name"
-                            control={control}
-                            rules={{ required: "Name is required" }}
-                            render={({ field }) => (
-                              <TextFieldComponent
-                                {...field}
-                                error={!!errors?.name?.message}
-                                helperText={errors ? errors?.name?.message : ""}
-                                size="small"
-                                fullWidth
-                              />
-                            )}
-                          />
-                        </Grid>
-
-                        <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
-                          <FormLabel>CPU model</FormLabel>
-                          <Controller
-                            name="model"
-                            control={control}
-                            render={({ field }) => (
-                              <TextFieldComponent
-                                {...field}
-                                error={!!errors?.model?.message}
-                                helperText={
-                                  errors ? errors?.model?.message : ""
-                                }
-                                size="small"
-                                fullWidth
-                              />
-                            )}
-                          />
-                        </Grid>
-                      </Grid>
-                      <Grid
-                        container="true"
-                        justifyContent={"space-between"}
-                        spacing={2}
-                      >
-                        <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
-                          <FormLabel>Hard disk size</FormLabel>
-                          <Controller
-                            name="harddiskSize"
-                            control={control}
-                            render={({ field }) => (
-                              <TextFieldComponent
-                                {...field}
-                                error={!!errors?.harddiskSize?.message}
-                                helperText={
-                                  errors ? errors?.harddiskSize?.message : ""
-                                }
-                                size="small"
-                                fullWidth
-                              />
-                            )}
-                          />
-                        </Grid>
-
-                        <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
-                          <FormLabel>Price</FormLabel>
-                          <Controller
-                            name="price"
-                            control={control}
-                            render={({ field }) => (
-                              <TextFieldComponent
-                                {...field}
-                                error={!!errors?.price?.message}
-                                helperText={
-                                  errors ? errors?.price?.message : ""
-                                }
-                                size="small"
-                                fullWidth
-                              />
-                            )}
-                          />
-                        </Grid>
-                      </Grid>
-                      <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
-                        <FormLabel>Year</FormLabel>
-                        <Controller
-                          name="year"
-                          control={control}
-                          render={({ field }) => (
-                            <TextFieldComponent
-                              {...field}
-                              error={!!errors?.year?.message}
-                              helperText={errors ? errors?.year?.message : ""}
-                              size="small"
-                              fullWidth
+                          <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
+                            <FormLabel>PC name</FormLabel>
+                            <Controller
+                              name="name"
+                              control={control}
+                              rules={{ required: "Name is required" }}
+                              render={({ field }) => (
+                                <TextFieldComponent
+                                  {...field}
+                                  error={!!errors?.name?.message}
+                                  helperText={
+                                    errors ? errors?.name?.message : ""
+                                  }
+                                  size="small"
+                                  fullWidth
+                                />
+                              )}
                             />
-                          )}
-                        />
-                      </Grid>
-                      <Grid>
-                        <Button type="submit" variant="contained">
-                          Submit
-                        </Button>
-                      </Grid>
-                    </Stack>
-                  </form>
-                </FormProvider>
+                          </Grid>
+
+                          <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
+                            <FormLabel>CPU model</FormLabel>
+                            <Controller
+                              name="model"
+                              control={control}
+                              render={({ field }) => (
+                                <TextFieldComponent
+                                  {...field}
+                                  error={!!errors?.model?.message}
+                                  helperText={
+                                    errors ? errors?.model?.message : ""
+                                  }
+                                  size="small"
+                                  fullWidth
+                                />
+                              )}
+                            />
+                          </Grid>
+                        </Grid>
+                        <Grid
+                          container="true"
+                          justifyContent={"space-between"}
+                          spacing={2}
+                        >
+                          <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
+                            <FormLabel>Hard disk size</FormLabel>
+                            <Controller
+                              name="harddiskSize"
+                              control={control}
+                              render={({ field }) => (
+                                <TextFieldComponent
+                                  {...field}
+                                  error={!!errors?.harddiskSize?.message}
+                                  helperText={
+                                    errors ? errors?.harddiskSize?.message : ""
+                                  }
+                                  size="small"
+                                  fullWidth
+                                />
+                              )}
+                            />
+                          </Grid>
+
+                          <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
+                            <FormLabel>Price</FormLabel>
+                            <Controller
+                              name="price"
+                              control={control}
+                              render={({ field }) => (
+                                <TextFieldComponent
+                                  {...field}
+                                  error={!!errors?.price?.message}
+                                  helperText={
+                                    errors ? errors?.price?.message : ""
+                                  }
+                                  size="small"
+                                  fullWidth
+                                />
+                              )}
+                            />
+                          </Grid>
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
+                          <FormLabel>Year</FormLabel>
+                          <Controller
+                            name="year"
+                            control={control}
+                            render={({ field }) => (
+                              <TextFieldComponent
+                                {...field}
+                                error={!!errors?.year?.message}
+                                helperText={errors ? errors?.year?.message : ""}
+                                size="small"
+                                fullWidth
+                              />
+                            )}
+                          />
+                        </Grid>
+                        <Grid>
+                          <Button type="submit" variant="contained">
+                            Submit
+                          </Button>
+                        </Grid>
+                      </Stack>
+                    </form>
+                  </FormProvider>
+                </Grid>
               </Grid>
             </Grid>
-          </Grid>
-        </Stack>
-      </Grid>
-    </Box>
+          </Stack>
+        </Grid>
+      </Box>
+    </>
   );
 };
 
