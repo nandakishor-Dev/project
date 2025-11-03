@@ -1,5 +1,5 @@
 import React from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Box,
   Button,
@@ -17,11 +17,13 @@ import { Controller, FormProvider, useForm } from "react-hook-form";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import TextFieldComponent from "../components/TextField";
+import { getUserList } from "../store/api/user";
 
 const Home = () => {
   const schema = z.object({
     firstName: z.string().min(1, "First name is required"),
     lastName: z.string().min(1, "Last name is required"),
+    address: z.string().min(1, "Address is required"),
     city: z.string().min(1, "City is required"),
     state: z.string().min(1, "State is required"),
     pincode: z.preprocess(
@@ -35,6 +37,7 @@ const Home = () => {
     defaultValues: {
       firstName: "",
       lastName: "",
+      address:"",
       city: "",
       state: "",
       pincode: "",
@@ -49,13 +52,14 @@ const Home = () => {
   } = methods;
   const onSubmit = (data) => console.log("data", data);
 
-  console.log("errors", errors);
+  const userList = useQuery({ queryKey: ["users"], queryFn: getUserList });
+  console.log("userList", userList.data);
   const mutation = useMutation({
     mutationFn: signUp,
     onSuccess: () => {
       // Invalidate and refetch
       alert("success");
-      //   queryClient.invalidateQueries({ queryKey: ["todos"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
     },
   });
 
@@ -85,24 +89,26 @@ const Home = () => {
           <Grid sx={{ bgcolor: "gray" }}>
             <Grid container="true">
               <Grid size={4} sx={{ bgcolor: "#F5F6FA", p: 10, pt: 20, pb: 20 }}>
-                <Grid container="true" spacing={2}>
-                  {/* {[1, 2, 3, 4].map((i) => (
-                  <Grid item key={i}>
-                    <Grid
-                      container
-                      direction={"row"}
-                      justifyContent={"space-between"}
-                    >
-                      <Grid item>
-                        <Typography>demoooo</Typography>
+                <Stack container="true" spacing={2}>
+                  {userList &&
+                    userList.data &&
+                    userList?.data.map((user, index) => (
+                      <Grid item key={user?.id}>
+                        <Grid
+                          container
+                          direction={"row"}
+                          justifyContent={"space-between"}
+                        >
+                          <Grid item>
+                            <Typography>{user?.name}</Typography>
+                          </Grid>
+                          <Grid item>
+                            <Typography>{user?.id}</Typography>
+                          </Grid>
+                        </Grid>
                       </Grid>
-                      <Grid item>
-                        <Typography>12345</Typography>
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                ))} */}
-                </Grid>
+                    ))}
+                </Stack>
               </Grid>
               <Grid size={8} sx={{ bgcolor: "white", p: 10, pr: 20 }}>
                 <FormProvider {...methods}>
