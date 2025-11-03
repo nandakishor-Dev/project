@@ -10,36 +10,32 @@ import {
   Typography,
 } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
-import { signUp } from "../store/auth/signup";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import TextFieldComponent from "../components/TextField";
-import { getUserList } from "../store/api/user";
+import { getProductList } from "../store/api/productList";
+import { registerProduct } from "../store/api/registerProduct";
 
 const Home = () => {
   const schema = z.object({
-    firstName: z.string().min(1, "First name is required"),
-    lastName: z.string().min(1, "Last name is required"),
-    address: z.string().min(1, "Address is required"),
-    city: z.string().min(1, "City is required"),
-    state: z.string().min(1, "State is required"),
-    pincode: z.preprocess(
-      (val) => Number(val),
-      z.number().min(100000, "Invalid pincode")
-    ),
-    country: z.string().min(1, "Country is required"),
+    name: z.string().min(1, "PC name is required"),
+    model: z.string().min(1, "Model is required"),
+    year: z.coerce
+      .number()
+      .int({ message: "Year must be an integer" })
+      .positive({ message: "Year is required" }),
+    harddiskSize: z.string().min(1, "Harddisk size is required"),
+    price: z.coerce.number().positive({ message: "Price is required" }),
   });
   const methods = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
-      address: "",
-      city: "",
-      state: "",
-      pincode: "",
-      country: "",
+      name: "",
+      model: "",
+      year: "",
+      harddiskSize: "",
+      price: "",
     },
   });
 
@@ -49,17 +45,30 @@ const Home = () => {
     formState: { errors },
   } = methods;
   const onSubmit = (data) => {
-    
-    console.log("data", data);
-    // mutation.mutate(data);
+    const payload = {
+      name: data.name,
+      data: {
+        year: data.year,
+        price: data.price,
+        "CPU model": data.model,
+        "Hard disk size": data.harddiskSize,
+      },
+    };
+    mutation.mutate(payload);
   };
 
-  const userList = useQuery({ queryKey: ["users"], queryFn: getUserList });
+  const productList = useQuery({
+    queryKey: ["products"],
+    queryFn: getProductList,
+  });
   const mutation = useMutation({
-    mutationFn: signUp,
-    onSuccess: () => {
+    mutationFn: registerProduct,
+    onSuccess: (data) => {
+      if(data.id){
+        
+      }
       // Invalidate and refetch
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
 
@@ -90,20 +99,20 @@ const Home = () => {
             <Grid container="true">
               <Grid size={4} sx={{ bgcolor: "#F5F6FA", p: 10, pt: 20, pb: 20 }}>
                 <Stack container="true" spacing={2}>
-                  {userList &&
-                    userList.data &&
-                    userList?.data.map((user, index) => (
-                      <Grid key={user?.id}>
+                  {productList &&
+                    productList.data &&
+                    productList?.data.map((product, index) => (
+                      <Grid key={product?.id}>
                         <Grid
                           container
                           direction={"row"}
                           justifyContent={"space-between"}
                         >
                           <Grid>
-                            <Typography>{user?.name}</Typography>
+                            <Typography>{product?.name}</Typography>
                           </Grid>
                           <Grid>
-                            <Typography>{user?.id}</Typography>
+                            <Typography>{product?.data?.price}</Typography>
                           </Grid>
                         </Grid>
                       </Grid>
@@ -120,39 +129,34 @@ const Home = () => {
                         spacing={2}
                       >
                         <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
-                          <FormLabel>First name</FormLabel>
+                          <FormLabel>PC name</FormLabel>
                           <Controller
-                            name="firstName"
+                            name="name"
                             control={control}
                             rules={{ required: "Name is required" }}
                             render={({ field }) => (
                               <TextFieldComponent
                                 {...field}
-                                error={!!errors?.firstName?.message}
-                                helperText={
-                                  errors ? errors?.firstName?.message : ""
-                                }
+                                error={!!errors?.name?.message}
+                                helperText={errors ? errors?.name?.message : ""}
                                 size="small"
                                 fullWidth
                               />
                             )}
                           />
-                          {errors.name?.message && (
-                            <p>{errors.name?.message}</p>
-                          )}
                         </Grid>
 
                         <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
-                          <FormLabel>Last name</FormLabel>
+                          <FormLabel>CPU model</FormLabel>
                           <Controller
-                            name="lastName"
+                            name="model"
                             control={control}
                             render={({ field }) => (
                               <TextFieldComponent
                                 {...field}
-                                error={!!errors?.lastName?.message}
+                                error={!!errors?.model?.message}
                                 helperText={
-                                  errors ? errors?.lastName?.message : ""
+                                  errors ? errors?.model?.message : ""
                                 }
                                 size="small"
                                 fullWidth
@@ -161,107 +165,64 @@ const Home = () => {
                           />
                         </Grid>
                       </Grid>
-                      <Grid>
-                        <FormLabel>Adress</FormLabel>
+                      <Grid
+                        container="true"
+                        justifyContent={"space-between"}
+                        spacing={2}
+                      >
+                        <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
+                          <FormLabel>Hard disk size</FormLabel>
+                          <Controller
+                            name="harddiskSize"
+                            control={control}
+                            render={({ field }) => (
+                              <TextFieldComponent
+                                {...field}
+                                error={!!errors?.harddiskSize?.message}
+                                helperText={
+                                  errors ? errors?.harddiskSize?.message : ""
+                                }
+                                size="small"
+                                fullWidth
+                              />
+                            )}
+                          />
+                        </Grid>
+
+                        <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
+                          <FormLabel>Price</FormLabel>
+                          <Controller
+                            name="price"
+                            control={control}
+                            render={({ field }) => (
+                              <TextFieldComponent
+                                {...field}
+                                error={!!errors?.price?.message}
+                                helperText={
+                                  errors ? errors?.price?.message : ""
+                                }
+                                size="small"
+                                fullWidth
+                              />
+                            )}
+                          />
+                        </Grid>
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
+                        <FormLabel>Year</FormLabel>
                         <Controller
-                          name="address"
+                          name="year"
                           control={control}
                           render={({ field }) => (
                             <TextFieldComponent
                               {...field}
-                              error={!!errors?.address?.message}
-                              helperText={
-                                errors ? errors?.address?.message : ""
-                              }
-                              size="medium"
+                              error={!!errors?.year?.message}
+                              helperText={errors ? errors?.year?.message : ""}
+                              size="small"
                               fullWidth
                             />
                           )}
                         />
-                      </Grid>
-                      <Grid
-                        container="true"
-                        justifyContent={"space-between"}
-                        spacing={2}
-                      >
-                        <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
-                          <FormLabel>City</FormLabel>
-                          <Controller
-                            name="city"
-                            control={control}
-                            render={({ field }) => (
-                              <TextFieldComponent
-                                {...field}
-                                error={!!errors?.city?.message}
-                                helperText={errors ? errors?.city?.message : ""}
-                                size="small"
-                                fullWidth
-                              />
-                            )}
-                          />
-                        </Grid>
-
-                        <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
-                          <FormLabel>State</FormLabel>
-                          <Controller
-                            name="state"
-                            control={control}
-                            render={({ field }) => (
-                              <TextFieldComponent
-                                {...field}
-                                error={!!errors?.state?.message}
-                                helperText={
-                                  errors ? errors?.state?.message : ""
-                                }
-                                size="small"
-                                fullWidth
-                              />
-                            )}
-                          />
-                        </Grid>
-                      </Grid>
-                      <Grid
-                        container="true"
-                        justifyContent={"space-between"}
-                        spacing={2}
-                      >
-                        <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
-                          <FormLabel>Zip/Postalcode</FormLabel>
-                          <Controller
-                            name="pincode"
-                            control={control}
-                            render={({ field }) => (
-                              <TextFieldComponent
-                                {...field}
-                                error={!!errors?.pincode?.message}
-                                helperText={
-                                  errors ? errors?.pincode?.message : ""
-                                }
-                                size="small"
-                                fullWidth
-                              />
-                            )}
-                          />
-                        </Grid>
-
-                        <Grid size={{ xs: 12, sm: 12, lg: 6 }}>
-                          <FormLabel>Country</FormLabel>
-                          <Controller
-                            name="country"
-                            control={control}
-                            render={({ field }) => (
-                              <TextFieldComponent
-                                {...field}
-                                error={!!errors?.country?.message}
-                                helperText={
-                                  errors ? errors?.country?.message : ""
-                                }
-                                size="small"
-                                fullWidth
-                              />
-                            )}
-                          />
-                        </Grid>
                       </Grid>
                       <Grid>
                         <Button type="submit" variant="contained">

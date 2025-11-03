@@ -1,1 +1,1 @@
-export const baseApi='https://jsonplaceholder.typicode.com'
+export const baseApi='https://api.restful-api.dev'
